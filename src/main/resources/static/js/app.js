@@ -209,7 +209,7 @@
       const p = Api.pagina(await Api.notificacoes(0, 50));
       const n = p.itens.filter((x) => !x.lida).length;
       const el = $('[data-contador]');
-      if (el && n > 0) { el.textContent = n; el.hidden = false; }
+      if (el) { el.textContent = n; el.hidden = n === 0; }
     } catch (e) { }
   }
 
@@ -875,9 +875,15 @@
 
   async function telaNotificacoes() {
     shell(cabecalho('NOTIFICAÇÕES', 'Seus avisos',
-      'Prioridade <b>alta</b>: problemas que você publicou ou comentou. Prioridade <b>baixa</b>: o que você apoiou e o resto da comunidade.')
+      'Prioridade <b>alta</b>: problemas que você publicou ou comentou. Prioridade <b>baixa</b>: o que você apoiou e o resto da comunidade.',
+      '<button type="button" class="botao secundario" data-limpar-lidas>Apagar as lidas</button>')
       + '<section class="painel"><div class="lista-avisos" data-lista="avisos">' + carregando + '</div>'
       + '<div class="paginacao" data-paginas="avisos"></div></section>');
+    $('[data-limpar-lidas]').onclick = async () => {
+      if (!confirm('Apagar todas as notificações já lidas?')) return;
+      try { await Api.limparLidas(); aviso('Notificações lidas apagadas.'); carregarAvisos(0); atualizarContador(); }
+      catch (e) { aviso(e.message, 'erro'); }
+    };
     carregarAvisos(0);
   }
 
@@ -891,10 +897,19 @@
         + '<span class="etiqueta prio-' + esc(n.prioridade) + '">' + (n.prioridade === 'ALTA' ? 'Alta' : 'Baixa') + '</span>'
         + '<div><p>' + esc(n.mensagem) + '</p><p class="meta">' + esc(dataHora(n.criadaEm))
         + (n.problemaId ? ' · <a href="#/problemas/' + num(n.problemaId) + '">ver problema →</a>' : '') + '</p></div>'
+        + '<div class="acoes-aviso">'
         + (n.lida ? '<small class="meta">lida</small>' : '<button type="button" class="botao secundario pequeno" data-lida="' + num(n.id) + '">Marcar como lida</button>')
+        + '<button type="button" class="link-perigo" data-apagar-aviso="' + num(n.id) + '">apagar</button></div>'
         + '</div>').join('')
         : vazio('Nenhum aviso por enquanto.');
       paginacao($('[data-paginas=avisos]'), p, carregarAvisos);
+      $$('[data-apagar-aviso]', alvo).forEach((b) => {
+        b.onclick = async () => {
+          b.disabled = true;
+          try { await Api.excluirNotificacao(b.dataset.apagarAviso); carregarAvisos(p.numero); atualizarContador(); }
+          catch (e) { aviso(e.message, 'erro'); b.disabled = false; }
+        };
+      });
       $$('[data-lida]', alvo).forEach((b) => {
         b.onclick = async () => {
           b.disabled = true;

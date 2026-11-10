@@ -168,6 +168,8 @@ const Api = (() => {
     excluirObservacao: (id) => chamar('DELETE', '/observacoes/' + id),
 
     notificacoes: (page, size) => chamar('GET', '/notificacoes' + qs({ page, size })),
-    marcarLida: (id) => chamar('PATCH', '/notificacoes/' + id + '/lida')
+    marcarLida: (id) => chamar('PATCH', '/notificacoes/' + id + '/lida'),
+    excluirNotificacao: (id) => chamar('DELETE', '/notificacoes/' + id),
+    limparLidas: () => chamar('DELETE', '/notificacoes/lidas')
   };
 })();

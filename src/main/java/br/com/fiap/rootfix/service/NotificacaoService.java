@@ -72,6 +72,18 @@ public class NotificacaoService {
     }
 
     @Transactional
+    public void excluir(Long id) {
+        Notificacao notificacao = notificacaoRepository.findByIdAndUsuarioId(id, usuarioLogado.id())
+                .orElseThrow(() -> new NaoEncontradoException("Notificação não encontrada."));
+        notificacaoRepository.delete(notificacao);
+    }
+
+    @Transactional
+    public long excluirLidas() {
+        return notificacaoRepository.deleteByUsuarioIdAndLida(usuarioLogado.id(), true);
+    }
+
+    @Transactional
     public void problemaPublicado(Long problemaId) {
         problemaRepository.findById(problemaId).ifPresent(problema -> {
             Long gestorId = problema.getComunidade().getGestor().getId();

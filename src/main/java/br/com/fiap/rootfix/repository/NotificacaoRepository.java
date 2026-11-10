@@ -12,4 +12,6 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
     Page<Notificacao> findByUsuarioIdOrderByCriadaEmDesc(Long usuarioId, Pageable paginacao);
 
     Optional<Notificacao> findByIdAndUsuarioId(Long id, Long usuarioId);
+
+    long deleteByUsuarioIdAndLida(Long usuarioId, boolean lida);
 }

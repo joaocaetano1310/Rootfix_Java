@@ -485,3 +485,4 @@ fieldset.local legend { font-size: 13px; font-weight: 600; padding: 0 6px; }
 .acoes-comunicado { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
 .formulario label.caixa { display: flex; flex-direction: row; gap: 8px; align-items: center; font-weight: 500; }
 .formulario label.caixa input { width: auto; margin: 0; }
+.acoes-aviso { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }

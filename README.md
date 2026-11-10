@@ -371,6 +371,8 @@ No front web, a tela de entrada tem os botões **Entrar como morador** e **Entra
 | `POST /problemas/{id}/reclassificar` | gestor dono | Pede nova análise da IA |
 | `GET /notificacoes?page&size` | logado | Minhas notificações |
 | `PATCH /notificacoes/{id}/lida` | logado | Marca como lida |
+| `DELETE /notificacoes/{id}` | logado | Apaga uma notificação minha |
+| `DELETE /notificacoes/lidas` | logado | Apaga todas as minhas notificações já lidas |
 | `GET /categorias` | público | Categorias de problema |
 | `GET /actuator/health` | público | Saúde da API, do banco e da fila |
 
