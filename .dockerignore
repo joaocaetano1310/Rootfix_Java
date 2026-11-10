@@ -1,0 +1,11 @@
+.env
+.git
+target
+bin
+.classpath
+.project
+.settings
+.idea
+.vscode
+*.iml
+db

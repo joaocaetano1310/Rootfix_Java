@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:rootfix;MODE=Oracle;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  rabbitmq:
+    addresses: amqp://guest:guest@localhost:1
+    listener:
+      simple:
+        auto-startup: false
+  ai:
+    model:
+      chat: none
+
+rootfix:
+  jwt:
+    secret: segredo-de-teste-com-bem-mais-de-32-caracteres
+    issuer: rootfix-api
+    expiracao-minutos: 60
+  dados-iniciais: false
