@@ -541,16 +541,6 @@ Rootfix_Java/
     │   └── static/               # front web (HTML, CSS, JS)
     └── test/                     # testes JUnit com MockMvc e H2
 ```
-
-## 🤖 Declaração de uso de IA
-
-| Ferramenta | Para quê |
-|---|---|
-| **Google Gemini** (via Spring AI) | Funcionalidade do produto: estima a categoria e a gravidade dos problemas a partir da foto |
-| **Claude (Anthropic)** | Apoio no desenvolvimento: geração e revisão de partes do código, do script SQL, dos testes e da documentação |
-
-Todo o conteúdo gerado com apoio de IA foi revisado, executado e testado pelo grupo, que responde pelas decisões e pelo resultado entregue.
-
 ---
 
 <div align="center">
