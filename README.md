@@ -32,6 +32,21 @@ Global Solution 2026/2 · FIAP · tema **CitizenTech** · grupo **Rooted**
 
 ---
 
+## 🔗 Links
+
+| O quê | Link |
+|---|---|
+| 🌐 Aplicação no ar (front web) | https://rootfix-java.onrender.com |
+| 📘 Swagger (documentação da API) | https://rootfix-java.onrender.com/swagger-ui.html |
+| 📄 OpenAPI em JSON | https://rootfix-java.onrender.com/v3/api-docs |
+| ❤️ Saúde da API (Oracle e RabbitMQ) | https://rootfix-java.onrender.com/actuator/health |
+| 💻 Repositório | https://github.com/joaocaetano1310/Rootfix_Java |
+| 🎬 Vídeo de apresentação | _a preencher_ |
+
+> A API está no plano gratuito do Render: depois de 15 minutos sem uso ela dorme, e o primeiro acesso pode levar cerca de 1 minuto.
+
+---
+
 ## 📚 Sumário
 
 1. [O problema](#-o-problema)
@@ -490,7 +505,7 @@ São 14 testes, que rodam com H2 em memória. Não precisam de Oracle, de Rabbit
 | Produção para o app | Render (Docker, a partir do GitHub) | Oracle da FIAP | CloudAMQP |
 | DevOps | Azure, via pipeline do Azure DevOps | Oracle em container | RabbitMQ em container |
 
-**Link do deploy:** _a preencher depois de criar o serviço no Render._
+**Link do deploy:** https://rootfix-java.onrender.com · Swagger em https://rootfix-java.onrender.com/swagger-ui.html
 
 > O plano gratuito do Render dorme após 15 minutos sem uso e leva cerca de 1 minuto para acordar.
 
