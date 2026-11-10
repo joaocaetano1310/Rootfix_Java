@@ -158,6 +158,11 @@ const Api = (() => {
     triagem: (page, size) => chamar('GET', '/triagem' + qs({ page, size })),
     reclassificar: (id) => chamar('POST', '/problemas/' + id + '/reclassificar'),
 
+    comunicados: (id, page, size) => chamar('GET', '/comunidades/' + id + '/comunicados' + qs({ page, size })),
+    publicarComunicado: (id, dados) => chamar('POST', '/comunidades/' + id + '/comunicados', dados),
+    editarComunicado: (id, dados) => chamar('PUT', '/comunicados/' + id, dados),
+    excluirComunicado: (id) => chamar('DELETE', '/comunicados/' + id),
+
     observacoes: (id) => chamar('GET', '/problemas/' + id + '/observacoes'),
     observar: (id, texto) => chamar('POST', '/problemas/' + id + '/observacoes', { texto }),
     excluirObservacao: (id) => chamar('DELETE', '/observacoes/' + id),

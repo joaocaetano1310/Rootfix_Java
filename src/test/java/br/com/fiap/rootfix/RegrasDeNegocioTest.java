@@ -1,6 +1,7 @@
 package br.com.fiap.rootfix;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -139,5 +140,45 @@ class RegrasDeNegocioTest extends ApiTestBase {
 
         mvc.perform(post("/problemas/{id}/adotar", problema).header("Authorization", bearer(dono.token())))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void gestorPublicaComunicadoDestacadoQueApareceEmPrimeiro() throws Exception {
+        Gestor gestor = gestorComComunidadeEm(BELA_VISTA_LAT, BELA_VISTA_LON);
+        String membro = moradorEm(PERTO_LAT, PERTO_LON);
+        entrar(membro, gestor.comunidadeId());
+
+        mvc.perform(post("/comunidades/{id}/comunicados", gestor.comunidadeId())
+                        .header("Authorization", bearer(gestor.token()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Reunião de moradores\",\"texto\":\"Sábado às 10h na praça.\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.destacado").value(false));
+
+        mvc.perform(post("/comunidades/{id}/comunicados", gestor.comunidadeId())
+                        .header("Authorization", bearer(gestor.token()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Falta de água amanhã\",\"texto\":\"A Sabesp avisou manutenção das 8h às 18h.\",\"destacado\":true}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.destacado").value(true));
+
+        mvc.perform(get("/comunidades/{id}/comunicados", gestor.comunidadeId()).header("Authorization", bearer(membro)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].titulo").value("Falta de água amanhã"))
+                .andExpect(jsonPath("$.content[0].destacado").value(true));
+
+        mvc.perform(post("/comunidades/{id}/comunicados", gestor.comunidadeId())
+                        .header("Authorization", bearer(membro))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Aviso\",\"texto\":\"Teste\"}"))
+                .andExpect(status().isForbidden());
+
+        Gestor outroGestor = gestorComComunidadeEm(BELA_VISTA_LAT, BELA_VISTA_LON);
+        mvc.perform(post("/comunidades/{id}/comunicados", gestor.comunidadeId())
+                        .header("Authorization", bearer(outroGestor.token()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"titulo\":\"Aviso\",\"texto\":\"Teste\"}"))
+                .andExpect(status().isForbidden());
     }
 }

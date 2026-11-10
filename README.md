@@ -106,6 +106,7 @@ Esta é a **API Java**, o backend principal: conta, login, comunidades, feed, ap
 | Comentar com observações | Pedir uma nova análise da IA |
 | Editar ou excluir o próprio problema antes da adoção | Receber aviso de cada problema novo |
 | Receber notificações com prioridade alta ou baixa | Acompanhar os supervisionados |
+| Ver os comunicados do gestor, com os destacados no topo | **Publicar comunicados**, com opção de destaque |
 
 ## 🛠️ Tecnologias
 
@@ -205,6 +206,8 @@ erDiagram
     RF_PROBLEMA ||--o{ RF_HISTORICO_STATUS : "registra"
     RF_USUARIO ||--o{ RF_NOTIFICACAO : "recebe"
     RF_PROBLEMA ||--o{ RF_NOTIFICACAO : "gera"
+    RF_COMUNIDADE ||--o{ RF_COMUNICADO : "tem"
+    RF_USUARIO ||--o{ RF_COMUNICADO : "publica"
 
     RF_USUARIO {
         number ID PK
@@ -243,6 +246,7 @@ erDiagram
 | `RF_OBSERVACAO` | Detalhes adicionados pelos membros |
 | `RF_HISTORICO_STATUS` | Mudanças de status, gravadas pela API .NET |
 | `RF_NOTIFICACAO` | Avisos com prioridade alta ou baixa |
+| `RF_COMUNICADO` | Comunicados do gestor para a comunidade, com destaque |
 
 ## 🚀 Como rodar
 
@@ -349,6 +353,15 @@ No front web, a tela de entrada tem os botões **Entrar como morador** e **Entra
 | `POST /problemas/{id}/observacoes` | membro | Adiciona observação |
 | `DELETE /observacoes/{id}` | autor | Remove a própria observação |
 
+**Comunicados**
+
+| Método e rota | Quem | Para quê |
+|---|---|---|
+| `GET /comunidades/{id}/comunicados?page&size` | membro | Lista os comunicados: destacados primeiro, depois os mais recentes |
+| `POST /comunidades/{id}/comunicados` | gestor dono | Publica comunicado (`destacado: true` avisa os membros com prioridade alta) |
+| `PUT /comunicados/{id}` | gestor dono | Edita o texto ou muda o destaque |
+| `DELETE /comunicados/{id}` | gestor dono | Exclui o comunicado |
+
 **Gestão, IA e notificações**
 
 | Método e rota | Quem | Para quê |
@@ -441,6 +454,7 @@ A API publica eventos numa exchange do tipo *topic* (`rootfix.eventos`) **soment
 | `observacao.adicionada` | `rootfix.observacao.adicionada` | API Java | Avisa quem publicou (alta) |
 | `problema.adotado` | `rootfix.problema.adotado` | API Java | Avisa os envolvidos |
 | `problema.status-alterado` | `rootfix.problema.status-alterado` | API .NET | Avisa os envolvidos |
+| `comunicado.publicado` | `rootfix.comunicado.publicado` | API Java | Avisa todos os membros (alta se destacado, baixa se não) |
 
 **Regra de prioridade das notificações:** **alta** para quem publicou e quem fez observação, e **baixa** para quem apoiou e os demais membros da comunidade.
 

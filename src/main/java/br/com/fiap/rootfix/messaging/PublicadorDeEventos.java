@@ -32,6 +32,11 @@ public class PublicadorDeEventos {
         enviar(RabbitConfig.CHAVE_ADOTADO, evento);
     }
 
+    @TransactionalEventListener
+    public void aoPublicarComunicado(ComunicadoPublicadoEvento evento) {
+        enviar(RabbitConfig.CHAVE_COMUNICADO, evento);
+    }
+
     private void enviar(String chave, Object evento) {
         try {
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, chave, evento);

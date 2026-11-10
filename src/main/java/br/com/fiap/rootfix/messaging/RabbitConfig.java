@@ -18,11 +18,13 @@ public class RabbitConfig {
     public static final String CHAVE_OBSERVACAO = "observacao.adicionada";
     public static final String CHAVE_ADOTADO = "problema.adotado";
     public static final String CHAVE_STATUS = "problema.status-alterado";
+    public static final String CHAVE_COMUNICADO = "comunicado.publicado";
 
     public static final String FILA_PUBLICADO = "rootfix.problema.publicado";
     public static final String FILA_OBSERVACAO = "rootfix.observacao.adicionada";
     public static final String FILA_ADOTADO = "rootfix.problema.adotado";
     public static final String FILA_STATUS = "rootfix.problema.status-alterado";
+    public static final String FILA_COMUNICADO = "rootfix.comunicado.publicado";
 
     @Bean
     public TopicExchange exchangeDeEventos() {
@@ -50,6 +52,11 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Queue filaComunicado() {
+        return QueueBuilder.durable(FILA_COMUNICADO).build();
+    }
+
+    @Bean
     public Binding ligacaoPublicado(TopicExchange exchangeDeEventos, Queue filaPublicado) {
         return BindingBuilder.bind(filaPublicado).to(exchangeDeEventos).with(CHAVE_PUBLICADO);
     }
@@ -67,6 +74,11 @@ public class RabbitConfig {
     @Bean
     public Binding ligacaoStatus(TopicExchange exchangeDeEventos, Queue filaStatus) {
         return BindingBuilder.bind(filaStatus).to(exchangeDeEventos).with(CHAVE_STATUS);
+    }
+
+    @Bean
+    public Binding ligacaoComunicado(TopicExchange exchangeDeEventos, Queue filaComunicado) {
+        return BindingBuilder.bind(filaComunicado).to(exchangeDeEventos).with(CHAVE_COMUNICADO);
     }
 
     @Bean

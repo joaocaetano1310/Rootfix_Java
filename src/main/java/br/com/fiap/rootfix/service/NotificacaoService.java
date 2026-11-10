@@ -17,6 +17,7 @@ import br.com.fiap.rootfix.exception.NaoEncontradoException;
 import br.com.fiap.rootfix.messaging.ObservacaoAdicionadaEvento;
 import br.com.fiap.rootfix.messaging.StatusAlteradoEvento;
 import br.com.fiap.rootfix.repository.ApoioRepository;
+import br.com.fiap.rootfix.repository.ComunicadoRepository;
 import br.com.fiap.rootfix.repository.NotificacaoRepository;
 import br.com.fiap.rootfix.repository.ObservacaoRepository;
 import br.com.fiap.rootfix.repository.ParticipacaoRepository;
@@ -38,18 +39,20 @@ public class NotificacaoService {
     private final ApoioRepository apoioRepository;
     private final ParticipacaoRepository participacaoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ComunicadoRepository comunicadoRepository;
     private final UsuarioLogado usuarioLogado;
 
     public NotificacaoService(NotificacaoRepository notificacaoRepository, ProblemaRepository problemaRepository,
             ObservacaoRepository observacaoRepository, ApoioRepository apoioRepository,
             ParticipacaoRepository participacaoRepository, UsuarioRepository usuarioRepository,
-            UsuarioLogado usuarioLogado) {
+            ComunicadoRepository comunicadoRepository, UsuarioLogado usuarioLogado) {
         this.notificacaoRepository = notificacaoRepository;
         this.problemaRepository = problemaRepository;
         this.observacaoRepository = observacaoRepository;
         this.apoioRepository = apoioRepository;
         this.participacaoRepository = participacaoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.comunicadoRepository = comunicadoRepository;
         this.usuarioLogado = usuarioLogado;
     }
 
@@ -101,6 +104,19 @@ public class NotificacaoService {
         problemaRepository.findById(evento.problemaId()).ifPresent(problema -> {
             String status = NOME_DO_STATUS.getOrDefault(evento.statusNovo(), evento.statusNovo());
             notificarEnvolvidos(problema, "O problema \"" + problema.getTitulo() + "\" mudou para " + status + ".");
+        });
+    }
+
+    @Transactional
+    public void comunicadoPublicado(Long comunicadoId) {
+        comunicadoRepository.findById(comunicadoId).ifPresent(comunicado -> {
+            PrioridadeNotificacao prioridade = comunicado.isDestacado()
+                    ? PrioridadeNotificacao.ALTA
+                    : PrioridadeNotificacao.BAIXA;
+            String mensagem = (comunicado.isDestacado() ? "Comunicado em destaque" : "Novo comunicado")
+                    + " na " + comunicado.getComunidade().getNome() + ": \"" + comunicado.getTitulo() + "\".";
+            participacaoRepository.findByComunidadeId(comunicado.getComunidade().getId())
+                    .forEach(p -> criar(p.getUsuario().getId(), null, mensagem, prioridade));
         });
     }
 

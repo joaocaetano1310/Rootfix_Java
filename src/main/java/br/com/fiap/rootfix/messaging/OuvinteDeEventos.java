@@ -46,4 +46,10 @@ public class OuvinteDeEventos {
         log.info("Recebido problema.status-alterado: {}", evento);
         notificacaoService.statusAlterado(evento);
     }
+
+    @RabbitListener(queues = RabbitConfig.FILA_COMUNICADO)
+    public void comunicadoPublicado(ComunicadoPublicadoEvento evento) {
+        log.info("Recebido comunicado.publicado: {}", evento);
+        notificacaoService.comunicadoPublicado(evento.comunicadoId());
+    }
 }

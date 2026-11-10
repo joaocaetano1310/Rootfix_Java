@@ -473,3 +473,15 @@ fieldset.local legend { font-size: 13px; font-weight: 600; padding: 0 6px; }
   .item-triagem { grid-template-columns: 88px minmax(0, 1fr); }
   .item-triagem .acoes { grid-column: 1 / -1; flex-direction: row; }
 }
+
+.destaques { display: grid; gap: 12px; margin-bottom: 18px; }
+.destaques:empty { display: none; }
+.lista-comunicados { display: grid; gap: 12px; }
+.comunicado { background: var(--branco); border: 1px solid var(--linha); border-radius: var(--raio); padding: 16px 18px; box-shadow: var(--sombra); }
+.comunicado h3 { font-size: 16px; margin-bottom: 6px; }
+.comunicado .texto-livre { margin-bottom: 8px; }
+.comunicado.destacado { background: var(--amarelo-claro); border-color: var(--amarelo); border-left: 5px solid var(--amarelo); }
+.etiqueta.fixado { background: var(--amarelo); color: #4a3700; }
+.acoes-comunicado { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+.formulario label.caixa { display: flex; flex-direction: row; gap: 8px; align-items: center; font-weight: 500; }
+.formulario label.caixa input { width: auto; margin: 0; }

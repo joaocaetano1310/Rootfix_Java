@@ -550,8 +550,10 @@
         + (c.totalMembros != null ? ' · ' + num(c.totalMembros) + ' membros' : '') + '</span>',
         (!gestorDono && c.participo ? '<button type="button" class="botao secundario" data-sair-comunidade>Sair da comunidade</button>' : '')
         + (!membro && !souGestor() ? '<button type="button" class="botao" data-entrar-comunidade>Entrar na comunidade</button>' : ''))
+      + (membro ? '<div class="destaques" data-destaques></div>' : '')
       + '<nav class="abas-pagina" role="tablist">'
       + '<button type="button" role="tab" class="ativa" data-aba="feed">Feed</button>'
+      + '<button type="button" role="tab" data-aba="comunicados">Comunicados</button>'
       + '<button type="button" role="tab" data-aba="supervisionados">Supervisionados</button>'
       + '</nav>'
       + '<section data-painel="feed">'
@@ -562,6 +564,11 @@
       + '<option value="recentes">Mais recentes</option><option value="apoiados">Mais apoiados</option></select></label></div>'
       + '<div class="lista-problemas" data-lista="feed">' + carregando + '</div>'
       + '<div class="paginacao" data-paginas="feed"></div>'
+      + '</section>'
+      + '<section data-painel="comunicados" hidden>'
+      + (gestorDono ? formularioComunicado() : '<p class="suave">Avisos oficiais do gestor da comunidade. Os destacados ficam no topo.</p>')
+      + '<div class="lista-comunicados" data-lista="comunicados">' + carregando + '</div>'
+      + '<div class="paginacao" data-paginas="comunicados"></div>'
       + '</section>'
       + '<section data-painel="supervisionados" hidden>'
       + '<p class="suave">Problemas que o gestor adotou. O status é atualizado pelo painel do gestor.</p>'
@@ -601,13 +608,69 @@
       }
     }
 
+    async function carregarDestaques() {
+      const alvo = $('[data-destaques]');
+      if (!alvo) return;
+      try {
+        const p = Api.pagina(await Api.comunicados(id, 0, 3));
+        const destacados = p.itens.filter((x) => x.destacado);
+        alvo.innerHTML = destacados.map((x) => cartaoComunicado(x, false)).join('');
+      } catch (e) {
+        alvo.innerHTML = '';
+      }
+    }
+
+    async function carregarComunicados(numero) {
+      const alvo = $('[data-lista=comunicados]');
+      alvo.innerHTML = carregando;
+      try {
+        const p = Api.pagina(await Api.comunicados(id, numero, 10));
+        alvo.innerHTML = p.itens.length ? p.itens.map((x) => cartaoComunicado(x, gestorDono)).join('')
+          : vazio(membro ? 'Nenhum comunicado publicado ainda.' : 'Entre na comunidade para ver os comunicados.');
+        paginacao($('[data-paginas=comunicados]'), p, carregarComunicados);
+        $$('[data-destacar]', alvo).forEach((b) => {
+          b.onclick = async () => {
+            const x = p.itens.find((i) => String(i.id) === b.dataset.destacar);
+            try {
+              await Api.editarComunicado(x.id, { titulo: x.titulo, texto: x.texto, destacado: !x.destacado });
+              carregarComunicados(numero);
+              carregarDestaques();
+            } catch (e) { aviso(e.message, 'erro'); }
+          };
+        });
+        $$('[data-excluir-comunicado]', alvo).forEach((b) => {
+          b.onclick = async () => {
+            if (!confirm('Excluir este comunicado?')) return;
+            try { await Api.excluirComunicado(b.dataset.excluirComunicado); carregarComunicados(numero); carregarDestaques(); }
+            catch (e) { aviso(e.message, 'erro'); }
+          };
+        });
+      } catch (e) {
+        alvo.innerHTML = membro ? erroHtml(e) : vazio('Entre na comunidade para ver os comunicados.');
+      }
+    }
+
     $$('[data-aba]').forEach((b) => {
       b.onclick = () => {
         $$('[data-aba]').forEach((x) => x.classList.toggle('ativa', x === b));
         $$('[data-painel]').forEach((s) => { s.hidden = s.dataset.painel !== b.dataset.aba; });
         if (b.dataset.aba === 'supervisionados') carregarSupervisionados(0);
+        if (b.dataset.aba === 'comunicados') carregarComunicados(0);
       };
     });
+
+    const formComunicado = $('#form-comunicado');
+    if (formComunicado) {
+      aoEnviar(formComunicado, async (d, f) => {
+        await Api.publicarComunicado(id, { titulo: d.titulo.trim(), texto: d.texto.trim(), destacado: f.elements.destacado.checked });
+        f.reset();
+        const painel = f.closest('details');
+        if (painel) painel.open = false;
+        aviso('Comunicado publicado. Os membros vão receber o aviso.');
+        carregarComunicados(0);
+        carregarDestaques();
+      });
+    }
     $('[data-ordem]').onchange = (ev) => { ordem = ev.target.value; carregarFeed(0); };
 
     const sair = $('[data-sair-comunidade]');
@@ -656,7 +719,30 @@
       });
     }
 
+    carregarDestaques();
     carregarFeed(0);
+  }
+
+  function cartaoComunicado(x, podeGerir) {
+    return '<article class="comunicado' + (x.destacado ? ' destacado' : '') + '">'
+      + '<div class="etiquetas">' + (x.destacado ? '<span class="etiqueta fixado">📌 Em destaque</span>' : '<span class="etiqueta neutra">Comunicado</span>') + '</div>'
+      + '<h3>' + esc(x.titulo) + '</h3>'
+      + '<p class="texto-livre">' + esc(x.texto) + '</p>'
+      + '<p class="meta">' + esc((x.autor && x.autor.nome) || 'Gestor') + ' · ' + esc(dataHora(x.criadoEm)) + '</p>'
+      + (podeGerir ? '<div class="acoes-comunicado">'
+        + '<button type="button" class="botao secundario pequeno" data-destacar="' + num(x.id) + '">' + (x.destacado ? 'Tirar destaque' : 'Destacar') + '</button>'
+        + '<button type="button" class="link-perigo" data-excluir-comunicado="' + num(x.id) + '">excluir</button></div>' : '')
+      + '</article>';
+  }
+
+  function formularioComunicado() {
+    return '<details class="publicar"><summary>＋ Publicar um comunicado</summary>'
+      + '<form id="form-comunicado" class="formulario"><div class="form-erro"></div>'
+      + '<label>Título<input name="titulo" required maxlength="120" placeholder="Falta de água na quinta-feira"></label>'
+      + '<label>Texto<textarea name="texto" required maxlength="2000" rows="4" placeholder="O que os moradores precisam saber?"></textarea></label>'
+      + '<label class="caixa"><input type="checkbox" name="destacado"> Destacar no topo da comunidade e avisar os membros com prioridade alta</label>'
+      + '<button type="submit" class="botao">Publicar comunicado</button>'
+      + '</form></details>';
   }
 
   function formularioPublicar() {
