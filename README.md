@@ -51,7 +51,6 @@ Global Solution 2026/2 · FIAP · tema **CitizenTech** · grupo **Rooted**
 15. [Deploy](#-deploy)
 16. [Variáveis de ambiente](#-variáveis-de-ambiente)
 17. [Estrutura do projeto](#-estrutura-do-projeto)
-18. [Declaração de uso de IA](#-declaração-de-uso-de-ia)
 
 ---
 
