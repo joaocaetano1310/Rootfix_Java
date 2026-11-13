@@ -1,7 +1,8 @@
 package br.com.fiap.rootfix.service;
 
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -87,11 +88,17 @@ public class NotificacaoService {
     public void problemaPublicado(Long problemaId) {
         problemaRepository.findById(problemaId).ifPresent(problema -> {
             Long gestorId = problema.getComunidade().getGestor().getId();
-            if (!gestorId.equals(problema.getAutor().getId())) {
-                criar(gestorId, problema, "Novo problema na " + problema.getComunidade().getNome() + ": \""
-                        + problema.getTitulo() + "\", publicado por " + problema.getAutor().getNome() + ".",
-                        PrioridadeNotificacao.ALTA);
+            Long autorId = problema.getAutor().getId();
+            String mensagem = "Novo problema na " + problema.getComunidade().getNome() + ": \""
+                    + problema.getTitulo() + "\", publicado por " + problema.getAutor().getNome() + ".";
+            if (!gestorId.equals(autorId)) {
+                criar(gestorId, problema, mensagem, PrioridadeNotificacao.ALTA);
             }
+            participacaoRepository.findByComunidadeId(problema.getComunidade().getId()).stream()
+                    .map(p -> p.getUsuario().getId())
+                    .filter(id -> !id.equals(autorId) && !id.equals(gestorId))
+                    .distinct()
+                    .forEach(id -> criar(id, problema, mensagem, PrioridadeNotificacao.BAIXA));
         });
     }
 
@@ -115,42 +122,43 @@ public class NotificacaoService {
     public void statusAlterado(StatusAlteradoEvento evento) {
         problemaRepository.findById(evento.problemaId()).ifPresent(problema -> {
             String status = NOME_DO_STATUS.getOrDefault(evento.statusNovo(), evento.statusNovo());
-            notificarEnvolvidos(problema, "O problema \"" + problema.getTitulo() + "\" mudou para " + status + ".");
+            String mensagem = "O problema \"" + problema.getTitulo() + "\" mudou para " + status
+                    + (evento.temObservacao() ? ": " + evento.observacao().trim() : ".");
+            notificarEnvolvidos(problema, mensagem);
         });
     }
 
     @Transactional
     public void comunicadoPublicado(Long comunicadoId) {
         comunicadoRepository.findById(comunicadoId).ifPresent(comunicado -> {
-            PrioridadeNotificacao prioridade = comunicado.isDestacado()
-                    ? PrioridadeNotificacao.ALTA
-                    : PrioridadeNotificacao.BAIXA;
             String mensagem = (comunicado.isDestacado() ? "Comunicado em destaque" : "Novo comunicado")
                     + " na " + comunicado.getComunidade().getNome() + ": \"" + comunicado.getTitulo() + "\".";
-            participacaoRepository.findByComunidadeId(comunicado.getComunidade().getId())
-                    .forEach(p -> criar(p.getUsuario().getId(), null, mensagem, prioridade));
+            participacaoRepository.findByComunidadeId(comunicado.getComunidade().getId()).stream()
+                    .map(p -> p.getUsuario().getId())
+                    .distinct()
+                    .forEach(id -> criar(id, null, mensagem, PrioridadeNotificacao.ALTA));
         });
     }
 
     private void notificarEnvolvidos(Problema problema, String mensagem) {
-        Map<Long, PrioridadeNotificacao> destinatarios = new LinkedHashMap<>();
-        destinatarios.put(problema.getAutor().getId(), PrioridadeNotificacao.ALTA);
+        Set<Long> destinatarios = new LinkedHashSet<>();
+        destinatarios.add(problema.getAutor().getId());
         observacaoRepository.findByProblemaIdOrderByCriadaEmAsc(problema.getId())
-                .forEach(o -> destinatarios.put(o.getAutor().getId(), PrioridadeNotificacao.ALTA));
+                .forEach(o -> destinatarios.add(o.getAutor().getId()));
         apoioRepository.findByProblemaId(problema.getId())
-                .forEach(a -> destinatarios.putIfAbsent(a.getUsuario().getId(), PrioridadeNotificacao.BAIXA));
+                .forEach(a -> destinatarios.add(a.getUsuario().getId()));
         participacaoRepository.findByComunidadeId(problema.getComunidade().getId())
-                .forEach(p -> destinatarios.putIfAbsent(p.getUsuario().getId(), PrioridadeNotificacao.BAIXA));
+                .forEach(p -> destinatarios.add(p.getUsuario().getId()));
         destinatarios.remove(problema.getComunidade().getGestor().getId());
 
-        destinatarios.forEach((usuarioId, prioridade) -> criar(usuarioId, problema, mensagem, prioridade));
+        destinatarios.forEach(usuarioId -> criar(usuarioId, problema, mensagem, PrioridadeNotificacao.ALTA));
     }
 
     private void criar(Long usuarioId, Problema problema, String mensagem, PrioridadeNotificacao prioridade) {
         Notificacao notificacao = new Notificacao();
         notificacao.setUsuario(usuarioRepository.getReferenceById(usuarioId));
         notificacao.setProblema(problema);
-        notificacao.setMensagem(mensagem.length() > 300 ? mensagem.substring(0, 297) + "..." : mensagem);
+        notificacao.setMensagem(mensagem.length() > 1000 ? mensagem.substring(0, 997) + "..." : mensagem);
         notificacao.setPrioridade(prioridade);
         notificacao.setLida(false);
         notificacaoRepository.save(notificacao);

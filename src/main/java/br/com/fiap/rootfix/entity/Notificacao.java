@@ -34,7 +34,7 @@ public class Notificacao {
     @JoinColumn(name = "ID_PROBLEMA")
     private Problema problema;
 
-    @Column(name = "MENSAGEM", nullable = false, length = 300)
+    @Column(name = "MENSAGEM", nullable = false, length = 1000)
     private String mensagem;
 
     @Enumerated(EnumType.STRING)

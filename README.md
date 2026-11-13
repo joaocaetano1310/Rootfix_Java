@@ -188,7 +188,7 @@ sequenceDiagram
 
 ## 🗄️ Modelo de dados
 
-São 10 tabelas, todas criadas por [`db/ddl.sql`](db/ddl.sql). A API não cria tabelas: ela só confere se o banco bate com as entidades (`ddl-auto=validate`).
+São 12 tabelas, todas criadas por [`db/ddl.sql`](db/ddl.sql), o script compartilhado pelas APIs Java e .NET. O Java usa 11 delas; a `RF_IDEMPOTENCIA` é só da API .NET. A API não cria tabelas: ela só confere se o banco bate com as entidades (`ddl-auto=validate`).
 
 ```mermaid
 erDiagram
@@ -244,7 +244,8 @@ erDiagram
 | `RF_FOTO_PROBLEMA` | Foto do problema (BLOB, até 5 MB) |
 | `RF_APOIO` | "Também sofri com isso" (único por usuário e problema) |
 | `RF_OBSERVACAO` | Detalhes adicionados pelos membros |
-| `RF_HISTORICO_STATUS` | Mudanças de status, gravadas pela API .NET |
+| `RF_HISTORICO_STATUS` | Mudanças de status, gravadas pela API .NET, com o gestor que alterou e o recado dele |
+| `RF_IDEMPOTENCIA` | Usada só pela API .NET, para não gravar a mesma mudança de status duas vezes |
 | `RF_NOTIFICACAO` | Avisos com prioridade alta ou baixa |
 | `RF_COMUNICADO` | Comunicados do gestor para a comunidade, com destaque |
 
@@ -266,7 +267,7 @@ git clone https://github.com/joaocaetano1310/Rootfix_Java.git
 cd Rootfix_Java
 ```
 
-**2. Crie as tabelas.** Rode [`db/ddl.sql`](db/ddl.sql) como script no SQL Developer (F5). No fim, aparecem as 10 tabelas `RF_*`.
+**2. Crie as tabelas.** Rode [`db/ddl.sql`](db/ddl.sql) como script no SQL Developer (F5). No fim, aparecem as 12 tabelas `RF_*`.
 
 **3. Configure as variáveis.** Copie `.env.example` para `.env` e preencha pelo menos `DB_USERNAME`, `DB_PASSWORD` e `JWT_SECRET` (32 caracteres ou mais). Para ligar a IA, defina também `IA_PROVEDOR=google-genai` e `GEMINI_API_KEY`. O `.env` está no `.gitignore` e nunca vai para o repositório.
 
@@ -358,7 +359,7 @@ No front web, a tela de entrada tem os botões **Entrar como morador** e **Entra
 | Método e rota | Quem | Para quê |
 |---|---|---|
 | `GET /comunidades/{id}/comunicados?page&size` | membro | Lista os comunicados: destacados primeiro, depois os mais recentes |
-| `POST /comunidades/{id}/comunicados` | gestor dono | Publica comunicado (`destacado: true` avisa os membros com prioridade alta) |
+| `POST /comunidades/{id}/comunicados` | gestor dono | Publica comunicado (`destacado: true` fixa no topo da comunidade) |
 | `PUT /comunicados/{id}` | gestor dono | Edita o texto ou muda o destaque |
 | `DELETE /comunicados/{id}` | gestor dono | Exclui o comunicado |
 
@@ -452,19 +453,26 @@ A API publica eventos numa exchange do tipo *topic* (`rootfix.eventos`) **soment
 
 | Evento (routing key) | Fila | Quem publica | O que o consumidor faz |
 |---|---|---|---|
-| `problema.publicado` | `rootfix.problema.publicado` | API Java | Avisa o gestor (alta) e classifica com Spring AI |
+| `problema.publicado` | `rootfix.problema.publicado` | API Java | Avisa o gestor (alta) e os outros membros (baixa), e classifica com Spring AI |
 | `observacao.adicionada` | `rootfix.observacao.adicionada` | API Java | Avisa quem publicou (alta) |
-| `problema.adotado` | `rootfix.problema.adotado` | API Java | Avisa os envolvidos |
-| `problema.status-alterado` | `rootfix.problema.status-alterado` | API .NET | Avisa os envolvidos |
-| `comunicado.publicado` | `rootfix.comunicado.publicado` | API Java | Avisa todos os membros (alta se destacado, baixa se não) |
+| `problema.adotado` | `rootfix.problema.adotado` | API Java | Avisa todos os moradores da comunidade (alta) |
+| `problema.status-alterado` | `rootfix.problema.status-alterado` | API .NET | Avisa todos os moradores da comunidade (alta), com o recado do gestor quando vier `observacao` |
+| `comunicado.publicado` | `rootfix.comunicado.publicado` | API Java | Avisa todos os membros (alta) |
 
-**Regra de prioridade das notificações:** **alta** para quem publicou e quem fez observação, e **baixa** para quem apoiou e os demais membros da comunidade.
+**Regras das notificações:**
+
+- Cada pessoa recebe **uma notificação só** por acontecimento, mesmo que seja autora, tenha apoiado e comentado.
+- **Gestor:** prioridade **alta** quando um problema novo é publicado na comunidade dele.
+- **Moradores:** prioridade **alta** para adoção, mudança de status, comunicados e comentários nos próprios problemas; prioridade **baixa** para problemas novos publicados por outros moradores.
+- O gestor não recebe aviso das próprias ações.
 
 Mensagem esperada da API .NET:
 
 ```json
-{ "problemaId": 12, "statusAnterior": "PENDENTE", "statusNovo": "EM_ANDAMENTO" }
+{ "problemaId": 12, "statusAnterior": "PENDENTE", "statusNovo": "EM_ANDAMENTO", "observacao": "A equipe vai amanhã cedo" }
 ```
+
+O campo `observacao` é opcional. Com ele, a notificação fica "O problema X mudou para Em andamento: A equipe vai amanhã cedo"; sem ele, "O problema X mudou para Em andamento.".
 
 Se o RabbitMQ estiver fora do ar, a API continua respondendo: o envio só fica registrado no log, e a requisição do usuário não falha.
 
@@ -500,7 +508,7 @@ O resultado alimenta a tela **Triagem da IA** (`GET /triagem`): um resumo por gr
 mvn test
 ```
 
-São 14 testes, que rodam com H2 em memória. Não precisam de Oracle, de RabbitMQ nem de chave de IA.
+São 17 testes, que rodam com H2 em memória. Não precisam de Oracle, de RabbitMQ nem de chave de IA.
 
 | Regra | Teste |
 |---|---|
@@ -509,6 +517,9 @@ São 14 testes, que rodam com H2 em memória. Não precisam de Oracle, de Rabbit
 | Morador a mais de 3 km não entra | `RegrasDeNegocioTest.moradorAMaisDe3KmNaoEntraNaComunidade` |
 | Um apoio por usuário por problema | `RegrasDeNegocioTest.umApoioPorUsuarioPorProblema` |
 | Quem não é membro não publica, não apoia e não observa | `RegrasDeNegocioTest.quemNaoEMembroNaoPublicaNaoApoiaNaoObserva` |
+| Só o gestor dono publica comunicado, e o destacado vem primeiro | `RegrasDeNegocioTest.gestorPublicaComunicadoDestacadoQueApareceEmPrimeiro` |
+| Problema novo: gestor recebe alta, vizinhos recebem baixa | `NotificacoesTest.problemaNovoAvisaGestorComAltaEVizinhosComBaixa` |
+| Mudança de status: uma notificação alta por morador, com o recado do gestor | `NotificacoesTest.mudancaDeStatusAvisaCadaMoradorUmaVezComAltaELevaORecadoDoGestor` |
 | Sem token: 401 · perfil errado: 403 | `SegurancaTest` |
 | Validação dos campos e login errado | `SegurancaTest` |
 | Cálculo da distância | `DistanciaTest` |
@@ -550,7 +561,7 @@ Para configurar no Render: *New → Web Service* → linguagem **Docker** → Do
 
 ```
 Rootfix_Java/
-├── db/ddl.sql                    # script Oracle das 10 tabelas
+├── db/ddl.sql                    # script Oracle das 12 tabelas
 ├── dockerfiles/Dockerfile        # imagem da API
 ├── docker-compose.yml            # RabbitMQ local
 ├── .env.example                  # modelo das variáveis

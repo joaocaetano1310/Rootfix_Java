@@ -740,7 +740,7 @@
       + '<form id="form-comunicado" class="formulario"><div class="form-erro"></div>'
       + '<label>Título<input name="titulo" required maxlength="120" placeholder="Falta de água na quinta-feira"></label>'
       + '<label>Texto<textarea name="texto" required maxlength="2000" rows="4" placeholder="O que os moradores precisam saber?"></textarea></label>'
-      + '<label class="caixa"><input type="checkbox" name="destacado"> Destacar no topo da comunidade e avisar os membros com prioridade alta</label>'
+      + '<label class="caixa"><input type="checkbox" name="destacado"> Destacar no topo da comunidade</label>'
       + '<button type="submit" class="botao">Publicar comunicado</button>'
       + '</form></details>';
   }
@@ -875,7 +875,7 @@
 
   async function telaNotificacoes() {
     shell(cabecalho('NOTIFICAÇÕES', 'Seus avisos',
-      'Prioridade <b>alta</b>: problemas que você publicou ou comentou. Prioridade <b>baixa</b>: o que você apoiou e o resto da comunidade.',
+      'Prioridade <b>alta</b>: atualizações do gestor, comunicados e comentários nos seus problemas. Prioridade <b>baixa</b>: problemas novos publicados pelos vizinhos.',
       '<button type="button" class="botao secundario" data-limpar-lidas>Apagar as lidas</button>')
       + '<section class="painel"><div class="lista-avisos" data-lista="avisos">' + carregando + '</div>'
       + '<div class="paginacao" data-paginas="avisos"></div></section>');
