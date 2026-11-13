@@ -9,6 +9,7 @@
 --     OBSERVACAO (recado do gestor ao morador)
 --   * RF_NOTIFICACAO.MENSAGEM foi de 300 para 1000 caracteres
 --   * RF_IDEMPOTENCIA nova, usada só pela API .NET
+--   * RF_IDEMPOTENCIA.IMPRESSAO_DIGITAL (pedido da API .NET, ver abaixo)
 --
 -- Quem escreve em cada tabela
 --   Java : RF_USUARIO, RF_COMUNIDADE, RF_PARTICIPACAO, RF_PROBLEMA
@@ -219,6 +220,10 @@ CREATE TABLE RF_IDEMPOTENCIA (
     CHAVE        VARCHAR2(100 CHAR) NOT NULL,
     ID_USUARIO   NUMBER(19)         NOT NULL,
     ROTA         VARCHAR2(200 CHAR) NOT NULL,
+    -- [API .NET] SHA-256 (hex) de metodo + rota + corpo. Detecta a mesma chave reutilizada
+    -- para outra operacao (ex.: EM_ANDAMENTO e depois ARQUIVADO) e responde 422.
+    IMPRESSAO_DIGITAL VARCHAR2(64 CHAR) NOT NULL,
+    -- 102 (Processing) = operacao em andamento; ao terminar, o status da resposta (200).
     STATUS_HTTP  NUMBER(3)          NOT NULL,
     RESPOSTA     CLOB,
     CRIADO_EM    TIMESTAMP          DEFAULT SYSTIMESTAMP NOT NULL,
