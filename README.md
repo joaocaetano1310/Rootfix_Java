@@ -41,7 +41,7 @@ Global Solution 2026/2 · FIAP · tema **CitizenTech** · grupo **Rooted**
 | 📄 OpenAPI em JSON | https://rootfix-java.onrender.com/v3/api-docs |
 | ❤️ Saúde da API (Oracle e RabbitMQ) | https://rootfix-java.onrender.com/actuator/health |
 | 💻 Repositório | https://github.com/joaocaetano1310/Rootfix_Java |
-| 🎬 Vídeo de apresentação | _a preencher_ |
+| 🎬 Vídeo de apresentação | https://youtu.be/6g8PwFXCxGU |
 
 > A API está no plano gratuito do Render: depois de 15 minutos sem uso ela dorme, e o primeiro acesso pode levar cerca de 1 minuto.
 
