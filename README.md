@@ -22,14 +22,13 @@ Global Solution 2026/2 · FIAP · tema **CitizenTech** · grupo **Rooted**
 
 ## 👥 Integrantes
 
-| Integrante | Responsabilidade no projeto |
-|---|---|
-| **João Victor Caetano** · RM 562074 | API Java e DevOps |
-| **João Victor Bueno Castelini** | IA (Disruptive Architectures) e QA |
-| **Felipe Furlanetto** | App Mobile (React Native) |
-| **Raul Rezende** | Banco de dados (Oracle e MongoDB) |
-| **Ryan Vetoriano** | API .NET (painel do gestor) |
-
+| Nome | RM |
+|------|----|
+| João Victor Caetano Alves da Silva | RM562074 |
+| João Victor Bueno Castelini da Silva | RM564115 |
+| Ryan Vetoriano | RM565667 |
+| Felipe Furlanetto | RM562766 |
+| Raul Rezende Iemini Aguiar | RM564002 |
 ---
 
 ## 🔗 Links
